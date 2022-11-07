@@ -133,7 +133,7 @@ down(){
         local_dir="$(pwd)/$name"
         if [ -d "$local_dir" ] && [[ $force -eq 1 ]]; then 
             echo "removing $local_dir"
-            rm -rf $local_dir
+            sudo rm -rf $local_dir
         fi
         docker volume rm $name || echo "Doesn't Exist"
     done
