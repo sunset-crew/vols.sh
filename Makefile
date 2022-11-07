@@ -254,7 +254,7 @@ top_builddir = .
 top_srcdir = .
 FLAGS = $BLAS_LIBS $LIBS $FLIBS
 shlldir = $(prefix)/bin
-shll_SCRIPTS = vol.sh
+shll_SCRIPTS = vols.sh
 all: all-am
 
 .SUFFIXES:
