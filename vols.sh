@@ -93,7 +93,7 @@ setup_colors
 
 
 file_volume_load(){
-    filepath="$(pwd)/vol.conf"
+    filepath="$(pwd)/vols.conf"
     if [ -f "$filepath" ];
     then 
         echo "found config file, $filepath"
