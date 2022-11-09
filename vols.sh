@@ -11,13 +11,14 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 usage() {
   cat <<EOF
-Usage: $(basename "$0") [-h] {up down} [-f] -v <addition> -v <volumes> ...
+Usage: $(basename "$0") [-h] {up new down} [-f] -v <addition> -v <volumes> ...
 
 This is a simple docker volume management script
 
-    up   - Creates the directories and docker volumes
-    down - Removes the docker volumes
-           with the -f can also delete the folders
+    up     - Creates the directories and docker volumes
+    new    - Creates the vols.conf file (use -v volumes) 
+    down   - Removes the docker volumes
+             'f' can also deletes the folders
 
 Available options:
 
