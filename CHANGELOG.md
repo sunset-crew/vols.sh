@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 [Also based on](https://github.com/conventional-changelog/standard-version/blob/master/CHANGELOG.md) so decending.
 
+## [0.1.2] - 2022-11-08
+### Added
+- adds new subcommand for generating the vols.conf file
+- adds test.py file for easy testing
+- adds additional state testing
+- adds more documentation for the test script
+
 ## [0.1.1] - 2022-11-07
 ### Added
 - adds s to config file name vols.conf
