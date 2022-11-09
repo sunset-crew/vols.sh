@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - adds deb and rpm package build examples also cleaned out older code
 
+### Removed
+- removes chdir in makefile scriping lang
+
 ## [0.1.2] - 2022-11-08
 ### Added
 - adds new subcommand for generating the vols.conf file

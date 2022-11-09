@@ -10,11 +10,6 @@
 # but WITHOUT ANY WARRANTY, to the extent permitted by law; without
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
-CHDIR_SHELL := $(SHELL)
-define chdir
-   $(eval _D=$(firstword $(1) $(@D)))
-   $(info $(MAKE): cd $(_D)) $(eval SHELL = cd $(_D); $(CHDIR_SHELL))
-endef
 
 CONFIG = .version
 include ${CONFIG}
