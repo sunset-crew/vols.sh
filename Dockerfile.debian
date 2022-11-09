@@ -1,0 +1,6 @@
+FROM debian:bullseye-slim
+RUN apt update -y && apt upgrade -y && apt install -y build-essential vim && groupadd -g 1000 -o builder && useradd -m -u 1000 -g 1000 -o -s /bin/bash builder
+USER builder
+WORKDIR /home/builder
+RUN mkdir ~/data
+CMD ["/home/builder/data/entrypoint-deb.sh"]

@@ -1,0 +1,14 @@
+version: "3"
+services:
+  centos9:
+    image: rpmbuild
+    # command: sleep 3600
+    user: "1000:1000"
+    volumes:
+      - .:/home/builder/data:rw
+  debian:
+    image: debuild
+    # command: sleep 3600
+    user: "1000:1000"
+    volumes:
+      - .:/home/builder/data:rw
