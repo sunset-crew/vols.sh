@@ -5,8 +5,7 @@ import re
 from pathlib import Path
 
 class DefaultValues(object):
-    version_update_file = "version_updater.json"
-    project = "default"
+    project = "vol.sh"
 
 
 class CommonFunctions(DefaultValues):
@@ -41,16 +40,13 @@ class CommonFunctions(DefaultValues):
         else:
             return stdout.decode()
 
-    def volsh(self, cmd):
-        # return "test"
-        return self.run_code(["./vols.sh"] + cmd, everything=True)
 
 class TestMonkey(object):
     def __init__(self):
         self.cf = CommonFunctions()
 
     def vols(self,cmds):
-        return self.cf.volsh(cmds)
+        return self.cf.run_code(["./vols.sh"] + cmds, everything=True)
 
     def process_obj(self, obj):
         out = ""
@@ -66,30 +62,6 @@ class TestMonkey(object):
             result += out+" "+err+"rc:"+str(obj["obj"].returncode) + "\n"
         return result
 
-    def a_new_test(self):
-        return self.vols(["new","-v","example"])
-
-    def b_check_file_test(self):
-        return self.cf.run_code(["stat","vols.conf"], everything=True)
-
-    def c_up_file_test(self):
-        return self.vols(["up"])
-
-    def d_down_test(self):
-        return self.vols(["down","-f"])
-
-    def e_rm_file_test(self):
-        return self.cf.run_code(["rm","-f","vols.conf"], everything=True)
-
-    def f_up_cli_test(self):
-        return self.vols(["up","-v","examplea"])
-
-    def g_down_test(self):
-        return self.vols(["down","-f","-v","examplea"])
-
-    def h_check_file_test(self):
-        return self.cf.run_code(["stat","vols.conf"], everything=True)
-
     def filter_tests(self, var):
         prog = re.compile(".*_test$")
         result = prog.match(var)
@@ -102,4 +74,59 @@ class TestMonkey(object):
             res = func()
             print(self.process_obj(res))
 
-TestMonkey()()
+    # Edit after this line
+    # make sure to keep the alpha indexing
+    # also, this is bash testing
+    # so everything needs to be a derivative run_code
+
+    def a_create_new_vols_conf_test(self):
+        """
+        Create new vols.conf
+        """
+        return self.vols(["new","-v","example"])
+
+    def b_check_vols_conf_created_test(self):
+        """
+        Check vols.conf exists
+        """
+        return self.cf.run_code(["stat","vols.conf"], everything=True)
+
+    def c_up_vols_conf_test(self):
+        """
+        Mount Docker External Volumes with vols.conf
+        """
+        return self.vols(["up"])
+
+    def d_down_vols_conf_test(self):
+        """
+        UnMount Docker External Volumes with vols.conf
+        """
+        return self.vols(["down","-f"])
+
+    def e_rm_vols_conf_test(self):
+        """
+        Removes vols.conf
+        """
+        return self.cf.run_code(["rm","-f","vols.conf"], everything=True)
+
+    def f_up_imperative_test(self):
+        """
+        Mount Docker External Volumes with -v <volume>
+        """
+        return self.vols(["up","-v","examplea"])
+
+    def g_down_imperative_test(self):
+        """
+        UnMount Docker External Volumes with -v <volume>
+        """
+        return self.vols(["down","-f","-v","examplea"])
+
+    def h_check_file_test(self):
+        """
+        Test Fail Check for non-existent vols.conf
+        """
+        return self.cf.run_code(["stat","vols.conf"], everything=True)
+
+
+if __name__ == "__main__":
+    TestMonkey()()
