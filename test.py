@@ -45,10 +45,6 @@ class CommonFunctions(DefaultValues):
         # return "test"
         return self.run_code(["./vols.sh"] + cmd, everything=True)
 
-["new","-v","example"]
-# check Path("./vols.conf").exists()
-["up"]
-["down","-f"]
 class TestMonkey(object):
     def __init__(self):
         self.cf = CommonFunctions()
@@ -57,30 +53,42 @@ class TestMonkey(object):
         return self.cf.volsh(cmds)
 
     def process_obj(self, obj):
+        out = ""
+        if obj["out"]:
+            out = obj["out"].decode()
+        err = ""
+        if obj["err"]:
+            out = obj["err"].decode()
         result = " ".join(obj["obj"].args) + "\n"
         if obj["out"] and obj["obj"].returncode == 0:
-            result += obj["out"].decode() + "\n"
-        if obj["err"]:
-            result += obj["out"].decode()+" "+obj["err"].decode()+" rc:"+str(obj["obj"].returncode) + "\n"
+            result += out + "rc:"+str(obj["obj"].returncode) + "\n"
+        if obj["err"] or obj["obj"].returncode != 0:
+            result += out+" "+err+"rc:"+str(obj["obj"].returncode) + "\n"
         return result
 
     def a_new_test(self):
         return self.vols(["new","-v","example"])
 
-    def b_up_file_test(self):
+    def b_check_file_test(self):
+        return self.cf.run_code(["stat","vols.conf"], everything=True)
+
+    def c_up_file_test(self):
         return self.vols(["up"])
 
-    def c_down_test(self):
+    def d_down_test(self):
         return self.vols(["down","-f"])
 
-    def d_rm_file_test(self):
+    def e_rm_file_test(self):
         return self.cf.run_code(["rm","-f","vols.conf"], everything=True)
 
-    def e_up_cli_test(self):
+    def f_up_cli_test(self):
         return self.vols(["up","-v","examplea"])
 
-    def f_down_test(self):
+    def g_down_test(self):
         return self.vols(["down","-f","-v","examplea"])
+
+    def h_check_file_test(self):
+        return self.cf.run_code(["stat","vols.conf"], everything=True)
 
     def filter_tests(self, var):
         prog = re.compile(".*_test$")
@@ -93,5 +101,5 @@ class TestMonkey(object):
             func = getattr(self, result)
             res = func()
             print(self.process_obj(res))
-            
+
 TestMonkey()()
