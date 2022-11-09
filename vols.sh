@@ -126,6 +126,19 @@ up() {
     done
 }
 
+new() {
+    filepath="$(pwd)/vols.conf"
+    touch $filepath
+    if [ "${#vol_names[@]}" -eq "0" ];
+    then
+        die "you'll need at least one volume\n -v <vol>"
+    fi
+    for name in ${vol_names[@]};
+    do
+        grep -q "$name" $filepath || echo "$name" >> $filepath
+    done
+}
+
 down(){
     for name in ${vol_names[@]}; 
     do  
@@ -140,7 +153,7 @@ down(){
 }
 
 main() {
-    possible_actions=("up" "down")
+    possible_actions=("up" "down" "new")
     main_index="-1"
     
     for i in "${!possible_actions[@]}";
