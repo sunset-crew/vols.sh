@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [0.1.4] - 2022-12-16
 ### Added
 - adds ability to have different names tied to different mountpoints
+- adds shellcheck linting system for better results
 
 ### Changed
 - changes the v to a since it adds to the vols.conf

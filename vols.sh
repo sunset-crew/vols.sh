@@ -2,6 +2,7 @@
 #
 # Docker External Volume Manager (DEVM)
 #
+# shellcheck disable=SC2034
 
 set -Eeuo pipefail
 
