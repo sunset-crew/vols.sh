@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 - changes the v to a since it adds to the vols.conf
+- fixes expression for the increments
 
 ## [0.1.3] - 2022-11-09
 ### Added
