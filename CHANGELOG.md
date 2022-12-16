@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - adds ability to have different names tied to different mountpoints
 
+### Changed
+- changes the v to a since it adds to the vols.conf
+
 ## [0.1.3] - 2022-11-09
 ### Added
 - adds deb and rpm package build examples also cleaned out older code

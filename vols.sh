@@ -13,7 +13,7 @@ trap cleanup SIGINT SIGTERM ERR EXIT
 
 usage() {
   cat <<EOF
-Usage: $(basename "$0") [-h] {up new down} [-f] -v <addition> -v <volumes> ...
+Usage: $(basename "$0") [-h] {up new down} [-f] -a name mountpoint -a anothername anothermntpoint ...
 
 This is a simple docker volume management script
 
@@ -26,7 +26,7 @@ Available options:
 
 -h, --help      Print this help and exit
 -f, --force     This is for the down option
-
+-a, --add       Adds the volume info to file during action
 EOF
   exit
 }
@@ -62,9 +62,10 @@ check_args() {
     fi
 }
 
-check_args $@
+check_args "$@"
 
-vol_names=()
+# vol_names=()
+
 curr=$(pwd)
 vol_file="${curr}/vols.conf"
 action=""
@@ -73,7 +74,8 @@ force=0
 
 append_mntpoints(){
     mntpoints[$1]=$2
-    echo "$1 $2"
+    line="$1 $2"
+    grep -q "$line" "$vol_file" || echo "$line" >> "$vol_file"
 }
 
 getopts-extra () {
@@ -81,17 +83,17 @@ getopts-extra () {
     # if the next argument is not an option, then append it to array OPTARG
     while [[ ${OPTIND} -le $# && ${!OPTIND:0:1} != '-' ]]; do
         OPTARG[i]=${!OPTIND}
-        let i++ OPTIND++
+        i++
+        OPTIND++
     done
 }
 
 parse_params(){
     action=${1}
     shift
-    while getopts "v:i:hf" opt; do
+    while getopts "a:i:hf" opt; do
         case $opt in
-            h) usage;;
-            v) getopts-extra $@
+            a) getopts-extra "$@"
                args=("${OPTARG[@]}")
                mntpoint=""
                name=${args[0]}
@@ -101,13 +103,14 @@ parse_params(){
                    mntpoint="${args[1]}"
                fi
                echo "$name $mntpoint"
-               append_mntpoints $name $mntpoint
+               append_mntpoints "$name" "$mntpoint"
             ;;
-            i) vol_file="$OPTARG"
+            h) usage;;
+            i) vol_file="${OPTARG[0]}"
                 echo "$vol_file"
             ;;
             f) force=1;;
-            :) echo "$OPTARG";;
+            :) echo "${OPTARG[0]}";;
             *) break;;
         esac
     done
@@ -123,12 +126,12 @@ file_volume_load() {
         echo "found config file, $vol_file"
         while read -r name mntpoint
         do
-          grep -q "^[^#;]" <<<$name || continue
+          grep -q "^[^#;]" <<<"$name" || continue
           mntpoint=$(echo "$mntpoint" | sed 's|\(.*\)\# .*$|\1|' | cut -d' ' -f1)
           if [ -z "$mntpoint" ]; then
             mntpoint=$(pwd)/$name
           fi
-          mntpoints[$name]=$mntpoint
+          mntpoints[$name]="$mntpoint"
           echo "name: $name  mountpoint: $mntpoint"
 
         done < "$vol_file"
@@ -145,20 +148,20 @@ create_vol() {
     fi
     docker volume create --driver local \
         --opt type=none \
-        --opt device=$2 \
-        --opt o=bind $1
+        --opt device="$2" \
+        --opt o=bind "$1"
 }
 
 up() {
-    for key in ${!mntpoints[@]};
+    for key in "${!mntpoints[@]}";
     do  
         mntpoint=${mntpoints[$key]}
         if [ ! -d "$mntpoint" ]; then
-            mkdir $mntpoint
+            mkdir "$mntpoint"
             echo "mkdir $mntpoint"
         fi
         echo "creating $key $mntpoint"
-        create_vol $key $mntpoint
+        create_vol "$key" "$mntpoint"
     done
 }
 
@@ -171,17 +174,17 @@ EOT
 }
 
 down() {
-    for key in ${!mntpoints[@]};
+    for key in "${!mntpoints[@]}";
     do
         mntpoint=${mntpoints[$key]}
         if [ -d "$mntpoint" ] && [[ $force -eq 1 ]]; then
             echo "sudo rm -rf $mntpoint"
-            sudo rm -rf $mntpoint
+            sudo rm -rf "$mntpoint"
         else
             echo "force not selected, leaving real mount point alone"
         fi
         echo "creating $key $mntpoint"
-        docker volume rm $key || echo "Doesn't Exist"
+        docker volume rm "$key" || echo "Doesn't Exist"
     done
 }
 
@@ -190,13 +193,12 @@ main() {
     main_index="-1"    
     for i in "${!possible_actions[@]}";
     do
-        p_index="$i"
         if [ "${possible_actions[${i}]}" == "$action" ];
         then
-            main_index=$(echo $action);break
+            main_index=$action; break
         fi
     done
-    if [ $main_index == "$action" ];
+    if [ "$main_index" == "$action" ];
     then
         ${action}  
     else
