@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 [Also based on](https://github.com/conventional-changelog/standard-version/blob/master/CHANGELOG.md) so decending.
 
+## [0.1.4] - 2022-12-16
+### Added
+- adds ability to have different names tied to different mountpoints
+- adds shellcheck linting system for better results
+
+### Changed
+- changes the v to a since it adds to the vols.conf
+- fixes expression for the increments
+
 ## [0.1.3] - 2022-11-09
 ### Added
 - adds deb and rpm package build examples also cleaned out older code

@@ -52,3 +52,6 @@ rpmexec:
 
 debexec:
 	docker exec -it volsh_debian_1 /bin/bash
+
+lint:
+	shellcheck vols.sh
