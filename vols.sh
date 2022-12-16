@@ -5,6 +5,8 @@
 
 set -Eeuo pipefail
 
+
+declare -A mntpoints
 # cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1
 
 trap cleanup SIGINT SIGTERM ERR EXIT
@@ -16,7 +18,7 @@ Usage: $(basename "$0") [-h] {up new down} [-f] -v <addition> -v <volumes> ...
 This is a simple docker volume management script
 
     up     - Creates the directories and docker volumes
-    new    - Creates the vols.conf file (use -v volumes) 
+    new    - Creates Demo vols.conf file
     down   - Removes the docker volumes
              'f' can also deletes the folders
 
@@ -63,23 +65,47 @@ check_args() {
 check_args $@
 
 vol_names=()
-
+curr=$(pwd)
+vol_file="${curr}/vols.conf"
 action=""
 
 force=0
 
-append_vol_names(){
-    vol_names+=("$1")
-    echo $1
+append_mntpoints(){
+    mntpoints[$1]=$2
+    echo "$1 $2"
+}
+
+getopts-extra () {
+    declare i=1
+    # if the next argument is not an option, then append it to array OPTARG
+    while [[ ${OPTIND} -le $# && ${!OPTIND:0:1} != '-' ]]; do
+        OPTARG[i]=${!OPTIND}
+        let i++ OPTIND++
+    done
 }
 
 parse_params(){
     action=${1}
     shift
-    while getopts "v:hf" opt; do
+    while getopts "v:i:hf" opt; do
         case $opt in
             h) usage;;
-            v) append_vol_names "$OPTARG";;
+            v) getopts-extra $@
+               args=("${OPTARG[@]}")
+               mntpoint=""
+               name=${args[0]}
+               if [[ ${#args[@]} == 1 ]]; then
+                   mntpoint="$name"
+               else
+                   mntpoint="${args[1]}"
+               fi
+               echo "$name $mntpoint"
+               append_mntpoints $name $mntpoint
+            ;;
+            i) vol_file="$OPTARG"
+                echo "$vol_file"
+            ;;
             f) force=1;;
             :) echo "$OPTARG";;
             *) break;;
@@ -88,75 +114,80 @@ parse_params(){
     shift $((OPTIND -1))
 }
 
-
 parse_params "$@"
 setup_colors
 
-
-file_volume_load(){
-    filepath="$(pwd)/vols.conf"
-    if [ -f "$filepath" ];
+file_volume_load() {
+    if [ -f "$vol_file" ];
     then 
-        echo "found config file, $filepath"
-        while read line;
+        echo "found config file, $vol_file"
+        while read -r name mntpoint
         do
-            vol_names+=("$line")
-        done < "$filepath"
+          grep -q "^[^#;]" <<<$name || continue
+          mntpoint=$(echo "$mntpoint" | sed 's|\(.*\)\# .*$|\1|' | cut -d' ' -f1)
+          if [ -z "$mntpoint" ]; then
+            mntpoint=$(pwd)/$name
+          fi
+          mntpoints[$name]=$mntpoint
+          echo "name: $name  mountpoint: $mntpoint"
+
+        done < "$vol_file"
+    else
+        echo "$vol_file does not exist"
     fi
 }
 
 file_volume_load
 
 create_vol() {
-    directory="$(pwd)/$1"
+    if [ ! -d "$2" ]; then
+        die "system side of the mount point\n directory\mdoes not exists"
+    fi
     docker volume create --driver local \
         --opt type=none \
-        --opt device=${directory} \
+        --opt device=$2 \
         --opt o=bind $1
 }
 
 up() {
-    for name in ${vol_names[@]}; 
+    for key in ${!mntpoints[@]};
     do  
-        local_dir="$(pwd)/$name"
-        if [ ! -d "$local_dir" ]; then 
-            mkdir $local_dir 
+        mntpoint=${mntpoints[$key]}
+        if [ ! -d "$mntpoint" ]; then
+            mkdir $mntpoint
+            echo "mkdir $mntpoint"
         fi
-        echo "creating $name"
-        create_vol $name
+        echo "creating $key $mntpoint"
+        create_vol $key $mntpoint
     done
 }
 
 new() {
-    filepath="$(pwd)/vols.conf"
-    touch $filepath
-    if [ "${#vol_names[@]}" -eq "0" ];
-    then
-        die "you'll need at least one volume\n -v <vol>"
-    fi
-    for name in ${vol_names[@]};
-    do
-        grep -q "$name" $filepath || echo "$name" >> $filepath
-    done
+    [ -f "$vol_file" ] && die "vols.conf already exists"
+    echo "adding example vols.conf"
+    cat <<EOT >  $vol_file
+# nameofmount /the/mount/location
+EOT
 }
 
-down(){
-    for name in ${vol_names[@]}; 
-    do  
-        echo "removing $name" 
-        local_dir="$(pwd)/$name"
-        if [ -d "$local_dir" ] && [[ $force -eq 1 ]]; then 
-            echo "removing $local_dir"
-            sudo rm -rf $local_dir
+down() {
+    for key in ${!mntpoints[@]};
+    do
+        mntpoint=${mntpoints[$key]}
+        if [ -d "$mntpoint" ] && [[ $force -eq 1 ]]; then
+            echo "sudo rm -rf $mntpoint"
+            sudo rm -rf $mntpoint
+        else
+            echo "force not selected, leaving real mount point alone"
         fi
-        docker volume rm $name || echo "Doesn't Exist"
+        echo "creating $key $mntpoint"
+        docker volume rm $key || echo "Doesn't Exist"
     done
 }
 
 main() {
     possible_actions=("up" "down" "new")
-    main_index="-1"
-    
+    main_index="-1"    
     for i in "${!possible_actions[@]}";
     do
         p_index="$i"
@@ -165,7 +196,6 @@ main() {
             main_index=$(echo $action);break
         fi
     done
-    #~  
     if [ $main_index == "$action" ];
     then
         ${action}  
